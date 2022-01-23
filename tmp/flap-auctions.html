@@ -46372,3 +46372,138 @@
 </table>
 </body></html>
 
+<!-- generate.py
+import sys, csv, json, datetime
+
+# group
+data = {}
+with open('flap-auctions.csv') as csvfile:
+    r = csv.reader(csvfile)
+    for row in r:
+        ts = row[1]
+        aid = row[0]
+        if aid == 'id':
+            continue
+        txn = row[3]
+        txndata = {
+            'aid': row[0],
+            'sender': row[2],
+            'method': row[4].replace('kick', '0/kick').replace('tend', '1/tend').replace('deal', '2/deal'),
+            'bid': row[6]
+        }
+        if ts not in data:
+            data[ts] = { txn: [ txndata ] }
+        else:
+            if txn not in data[ts]:
+                data[ts][txn] = [ txndata ]
+            else:
+                data[ts][txn].append(txndata)
+
+out = []
+for ts in sorted(data): 
+    hdate = datetime.datetime.utcfromtimestamp(float(ts)).strftime('%Y-%m-%d %H:%M:%S')
+    deets = { 'ts': hdate, 'epoch': ts, hdate: {} }
+    for txn in data[ts]:
+        deets[hdate][txn] = []
+        for details in sorted(data[ts][txn], key=lambda x: (x['aid'], x['method'])):
+            deets[hdate][txn].append(details)
+    out.append(deets)
+
+# dump
+if len(sys.argv) > 1 and sys.argv[1] == '--to-json':
+    print(json.dumps(out))
+    sys.exit()
+
+print("""
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>flap-auctions</title>
+    <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.1.1/normalize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
+    <style>
+        body {
+            font-family: "Source Code Pro", sans-serif;
+            padding: 10px;
+        }
+        td {
+            vertical-align: top;
+            overflow: hidden;
+        }
+        .emp1 {
+            background-color: #fcd375;
+            text-decoration: none !important; 
+            color: black;
+            padding: 3px;
+        }
+        .deets { margin-left: 5em; }
+    </style>
+  </head>
+  <body>
+  <a href="https://raw.githubusercontent.com/mfw78/makerdao-reports/main/flap-auctions.csv">Source data</a>
+  <table class="u-full-width">
+  <thead>
+    <tr>
+      <th>Time</th>
+      <th>Txn/Details</th>
+    </tr>
+  </thead>
+  <tbody>
+""")
+
+
+lastevent = None
+for deets in out:
+    print('<tr>')
+    if lastevent is not None:
+        d1 = datetime.datetime.strptime(deets['ts'], '%Y-%m-%d %H:%M:%S')
+        d2 = datetime.datetime.strptime(lastevent, '%Y-%m-%d %H:%M:%S')
+        ddiff = d1 - d2
+        m = divmod(ddiff.total_seconds(), 60) 
+        if m[0] > 1:
+            print('<td><a name="{}"><a href="#{}" class="emp1">{}</a> +{} minutes {} seconds</td>'.format(deets['epoch'], deets['epoch'], deets['ts'], m[0], m[1]))
+        else:
+            print('<td><a name="{}"></a><a class="emp1" href="#{}">{}</a> +{} seconds</td>'.format(deets['epoch'], deets['epoch'], deets['ts'], m[1]))
+    else:
+        print('<td><a name="{}"></a>{}</td>'.format(deets['epoch'], deets['ts']))
+    lastevent = deets['ts']
+
+    print('<td>')
+    txns = deets[deets['ts']]
+    txi = 0
+    for txn in txns.keys():
+        if txi == 0:
+            print('<div class="txn"><a href="https://etherscan.io/tx/{}">{}</a></div>'.format(txn,txn))
+        else:
+            print('<div class="txn"><a href="https://etherscan.io/tx/{}">{}</a></div>'.format(txn,txn))
+
+        print('<div class="deets">')
+        for txnd in txns[txn]:
+            method = txnd['method'].replace('0/','').replace('1/','').replace('2/','')
+            if method == 'tend':
+                print('<div><a href="https://etherscan.io/address/{}">{}</a> called <code>{}()</code> on auction <code>[{}]</code> with bid of <code>{}</code></div>'.format(
+                    txnd['sender'],
+                    txnd['sender'],
+                    method,
+                    txnd['aid'],
+                    txnd['bid'],
+                ))
+            else:
+                print('<div><a href="https://etherscan.io/address/{}">{}</a> called <code>{}()</code> on auction <code>[{}]</code></div>'.format(
+                    txnd['sender'],
+                    txnd['sender'],
+                    method,
+                    txnd['aid'],
+                ))
+        print('</div>')
+    print('</td></tr>')
+
+print("""
+  </tbody>
+</table>
+</body></html>
+""")
+-->
