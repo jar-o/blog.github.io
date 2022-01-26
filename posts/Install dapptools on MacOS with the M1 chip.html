@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Install dapptools on MacOS with the M1 chip</title>
+    <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.1.1/normalize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
+    <style>
+        body {
+            font-family: "Source Code Pro", sans-serif;
+            padding: 10px;
+        }
+        td {
+            vertical-align: top;
+            overflow: hidden;
+        }
+        .emp1 {
+            background-color: #fcd375;
+            text-decoration: none !important;
+            color: black;
+            padding: 3px;
+        }
+        .deets { margin-left: 5em; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+        <a href="/">Home</a>
+<h3>How to install dapptools on MacOS with the M1 chip</h3>
+<p><em>At least until there's actual support from NixOS for the new M1 chip...</em></p>
+<p>The Ethereum <a href="https://dapp.tools/">dapptools</a> suite relies on the <a href="https://nixos.org/">NixOS</a> package management system. Installation was pretty simple in previous architectures, but if you find yourself with a new Mac with the <a href="https://www.apple.com/newsroom/2021/10/introducing-m1-pro-and-m1-max-the-most-powerful-chips-apple-has-ever-built/">M1 chip</a>, there is an extra step.</p>
+<p>NixOS is the prerequisite, so you need to install that first. Using a terminal, do</p>
+<pre><code># You must be a sudoer
+curl -L https://nixos.org/nix/install | sh
+
+# Run this or login again to use Nix
+. &quot;$HOME/.nix-profile/etc/profile.d/nix.sh&quot;
+</code></pre>
+<p>Now, <strong>before</strong> trying to install <code>dapptools</code>, you need to edit <code>/etc/nix/nix.conf</code> and add the following line, if it doesn't exist:</p>
+<pre><code>system = x86_64-darwin
+</code></pre>
+<p>This tells NixOS to use the old Intel architecture (via <a href="https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment">Rosetta</a>) for its packages.</p>
+<p>Note you will need to edit <code>/etc/nix/nix.conf</code> via <code>sudo</code>.</p>
+<p>After you've done this, you should be good to go to install <code>dapptools</code>:</p>
+<pre><code>curl https://dapp.tools/install | sh
+</code></pre>    </div> <!-- container -->
+</body>
+</html>
