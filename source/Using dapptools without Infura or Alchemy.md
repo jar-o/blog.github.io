@@ -12,7 +12,6 @@ However, these tools need a way to "talk" to the Ethereum blockchain. The easies
 
 ```
 export ETH_RPC_URL=https://mainnet.infura.io/v3/<YOUR API KEY>
-
 ```
 and running your command. However, using these two API services means your access to Ethereum, which is foundationally a decentralized platform, is gated by one of two *centralized services*. A bit of irony.
 
