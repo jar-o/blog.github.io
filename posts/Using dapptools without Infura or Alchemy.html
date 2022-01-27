@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Using dapptools without Infura or Alchemy</title>
+    <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.1.1/normalize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
+    <style>
+        blockquote { font-style: italic; }
+        body {
+            font-family: "Source Code Pro", sans-serif;
+            padding: 10px;
+        }
+        td {
+            vertical-align: top;
+            overflow: hidden;
+        }
+        .emp1 {
+            background-color: #fcd375;
+            text-decoration: none !important;
+            color: black;
+            padding: 3px;
+        }
+        .deets { margin-left: 5em; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+        <a href="/">Home</a>
+<h1>Using dapptools without Infura or Alchemy</h1>
+<p>To interact with the Ethereum blockchain, you naturally need some tooling. E.g. you can use something like <a href="https://github.com/dapphub/dapptools/blob/master/src/seth/README.md">seth</a> to send ether (among many other things):</p>
+<pre><code>seth send --value 1 0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359
+</code></pre>
+<p><code>seth</code> is part of <a href="https://dapp.tools/">dapptools</a>, a nice suite of CLI tools that allow you to do pretty much everything from make calls to existing smart contracts to develop and deploy new smart contracts on the Ethereum blockchain.</p>
+<p>However, these tools need a way to "talk" to the Ethereum blockchain. The easiest and quickest way to get started is to use either the <a href="https://infura.io">Infura</a> or <a href="https://www.alchemy.com/">Alchemy</a> services. After signing up, it's as simple as setting the <code>ETH_RPC_URL</code> environment variable, e.g.</p>
+<pre><code>export ETH_RPC_URL=https://mainnet.infura.io/v3/&lt;YOUR API KEY&gt;
+
+</code></pre>
+<p>and running your command. However, using these two API services means your access to Ethereum, which is foundationally a decentralized platform, is gated by one of two <em>centralized services</em>. A bit of irony.</p>
+<p>This was noted recently by Moxie Marlinespike on his <a href="https://moxie.org/2022/01/07/web3-first-impressions.html">blog</a>:</p>
+<blockquote>
+<p>Almost all dApps use either Infura or Alchemy in order to interact with the blockchain. In fact, even when you connect a wallet like MetaMask to a dApp, and the dApp interacts with the blockchain via your wallet, MetaMask is just making calls to Infura!</p>
+<p>These client APIs are not using anything to verify blockchain state or the authenticity of responses. The results aren’t even signed...</p>
+<p>This was surprising to me. So much work, energy, and time has gone into creating a trustless distributed consensus mechanism, but virtually all clients that wish to access it do so by simply trusting the outputs from these two companies without any further verification.</p>
+</blockquote>
+<p>You may be happy to learn however, that while using these services is the path of least resistance to getting started, it's not really that difficult to actually connect to the blockchain directly, using an Ethereum <a href="https://medium.com/@rauljordan/a-primer-on-ethereum-blockchain-light-clients-f3cadde49137">light client</a>.</p>
+<p>The first thing you'll need to do is install <a href="https://geth.ethereum.org/docs/install-and-build/installing-geth">geth</a>. You can run a full node with this tool if you want, but you will need some serious resources!</p>
+<p>We're just going to run a light client to give us accesss to Ethereum directly. Once <code>geth</code> is installed, you'll need to start it with the following command:</p>
+<pre><code>geth --http --syncmode &quot;light&quot;
+</code></pre>
+<p>The above starts <code>geth</code> in light sync mode. The <code>--http</code> option enables the HTTP-RPC listener. This is necessary for giving access to your tools like <code>seth</code>.</p>
+<p>The first time you run your light node, you will likely need to wait a bit while it discovers peers and does some syncing. I think I waited around 15 minutes or so before I was able to use it, but you may need to wait a bit longer. You'll know when your commands work.</p>
+<p>Once your <code>geth</code> node is in a good sync state, you set <code>ETH_RPC_URL</code> (or equivalent) to your locally running node:</p>
+<pre><code>export ETH_RPC_URL=http://localhost:8545
+</code></pre>
+<p>(The port <code>8545</code> is the default, but you may change this as necessary.)</p>
+<p>Now, you're free to use your tools just like you would with Infura or Alchemy, but with a more direct connection into Ethereum.</p>
+<script
+  async
+  src="https://utteranc.es/client.js"
+  repo="jar-o/jar-o.github.io"
+  issue-term="title"
+  theme="github-light"
+  crossorigin="anonymous"
+></script>
+
+    </div> <!-- container -->
+</body>
+</html>
