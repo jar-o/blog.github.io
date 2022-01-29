@@ -40,7 +40,12 @@ for fil in files:
         html = markdown.markdown(text, extensions=['fenced_code'])
         post_path = os.path.join(post_dir, fn_html)
         with open(post_path, "w") as of:
-            of.write(''.join([templates.get('header-post').replace('[title]', fn), html, templates.get('footer-post')]))
+            of.write(''.join(
+                [
+                    templates.get('header-post').replace('[title]', fn).replace('[edited]', f'{edited}'),
+                    html,
+                    templates.get('footer-post')
+                ]))
         print(f'Wrote {fn_html} | updated {edited}')
         index.append({
             'title': fn,

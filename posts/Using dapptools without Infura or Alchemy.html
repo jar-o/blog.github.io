@@ -23,12 +23,14 @@
             color: black;
             padding: 3px;
         }
-        .deets { margin-left: 5em; }
     </style>
   </head>
   <body>
     <div class="container">
-        <a href="/">Home</a>
+        <div class="row">
+            <div class="eight columns"><a href="/">Home</a></div>
+            <div class="four columns" style="text-align:right">2022-01-27 17:57:28.049463</div>
+        </div>
 <h1>Using dapptools without Infura or Alchemy</h1>
 <p>To interact with the Ethereum blockchain, you naturally need some tooling. E.g. you can use something like <a href="https://github.com/dapphub/dapptools/blob/master/src/seth/README.md">seth</a> to send ether (among many other things):</p>
 <pre><code>seth send --value 1 0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359
