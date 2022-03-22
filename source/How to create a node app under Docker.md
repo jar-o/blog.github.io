@@ -88,4 +88,4 @@ docker run my-helowrld-app helowrld
  |_| |_|\___|_|\___/ \_/\_/ |_|  |_|\__,_|
 ```
 
-There you have it. A single dependency application you can easily distribute.
+There you have it. A single dependency `node` application you can easily distribute.
