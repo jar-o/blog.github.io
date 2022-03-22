@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>How to create a node app under Docker</title>
+    <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.1.1/normalize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
+    <style>
+        blockquote { font-style: italic; }
+        body {
+            font-family: "Source Code Pro", sans-serif;
+            padding: 10px;
+        }
+        td {
+            vertical-align: top;
+            overflow: hidden;
+        }
+        .emp1 {
+            background-color: #fcd375;
+            text-decoration: none !important;
+            color: black;
+            padding: 3px;
+        }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+        <div class="row">
+            <div class="eight columns"><a href="/">Home</a></div>
+            <div class="four columns" style="text-align:right">2022-03-22 12:57:44.204039</div>
+        </div>
+<h1>How to create a node app under Docker</h1>
+<p>Want to run a Node-based app under Docker? It's a great way to create and distribute a Node application with only a single dependency: Docker. Users won't need to have <code>node</code> or <code>npm</code> anywhere on their system.</p>
+<p>Let's start with the app itself. Just a basic <em>hello world</em> with dependencies. Create a file named <code>app.js</code>:</p>
+<pre><code>var figlet = require('figlet');
+
+figlet('helowrld', function(err, data) {
+    if (err) {
+        console.log('Something went wrong...');
+        console.dir(err);
+        return;
+    }
+    console.log(data)
+});
+</code></pre>
+<p>We're going to use the <a href="https://www.npmjs.com/package/figlet">figlet</a> module to print out a nice ASCII-art style message. (Obviously to develop and test on your own system, you'll need to have <code>node</code> etc installed. It's simply not a requirement for users.)</p>
+<p>Once your app is how you want it, you will now want to package it via Docker. Before we can get to creating a <code>Dockerfile</code> however, we'll need to create a file that <code>npm</code> can use to install your app. In the same folder as <code>app.js</code> create a file named <code>package.json</code>. It should look something like:</p>
+<pre><code>{
+ &quot;name&quot;: &quot;helowrld&quot;,
+ &quot;version&quot;: &quot;1.0.0&quot;,
+ &quot;description&quot;: &quot;A voice is heard.&quot;,
+ &quot;main&quot;: &quot;app.js&quot;,
+ &quot;scripts&quot;: {
+   &quot;test&quot;: &quot;TODO you should perhaps create some tests here...&quot;
+ },
+ &quot;keywords&quot;: [],
+ &quot;author&quot;: &quot;Me&quot;,
+ &quot;license&quot;: &quot;MIT&quot;,
+ &quot;bin&quot;: {
+   &quot;helowrld&quot;: &quot;./app.js&quot;
+ }
+}
+</code></pre>
+<p>We're doing the bare minimum above, and for a real app you probably should create a set of tests to verify behavior. Most of the above should be pretty self-explanatory and easy to drop in and modify for your needs. The section</p>
+<pre><code> &quot;bin&quot;: {
+   &quot;helowrld&quot;: &quot;./app.js&quot;
+ }
+</code></pre>
+<p>is worth noting, it just maps a command name to your app's source code.</p>
+<p>Now that we have the packaging in place, it's time to create a Dockerized package. Make a <code>Dockerfile</code> in the same folder that looks like:</p>
+<pre><code>FROM node
+RUN mkdir /app
+WORKDIR /app
+
+RUN npm install figlet
+
+ADD ./app.js app.js
+ADD ./package.json package.json
+RUN npm install -g .
+</code></pre>
+<p>Effectively the above does the following:</p>
+<ol>
+<li>Pulls the official <code>node</code> Dockerfile to base ours on,</li>
+<li>Creates a working directory in the image,</li>
+<li>Installs our dependency (<code>figlet</code>),</li>
+<li>Copies in our app source and installs it as the command <code>helowrld</code>.</li>
+</ol>
+<p>Now, we can build</p>
+<pre><code>docker build . -t my-helowrld-app
+</code></pre>
+<p>and run the image:</p>
+<pre><code>docker run my-helowrld-app helowrld
+
+  _          _                    _     _
+ | |__   ___| | _____      ___ __| | __| |
+ | '_ \ / _ \ |/ _ \ \ /\ / / '__| |/ _` |
+ | | | |  __/ | (_) \ V  V /| |  | | (_| |
+ |_| |_|\___|_|\___/ \_/\_/ |_|  |_|\__,_|
+</code></pre>
+<p>There you have it. A single dependency application you can easily distribute.</p>
+<script
+  async
+  src="https://utteranc.es/client.js"
+  repo="jar-o/jar-o.github.io"
+  issue-term="title"
+  theme="github-light"
+  crossorigin="anonymous"
+></script>
+
+    </div> <!-- container -->
+</body>
+</html>
