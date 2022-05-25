@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Can you get rugged by RocketPool?</title>
+    <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.1.1/normalize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
+    <style>
+        blockquote { font-style: italic; }
+        body {
+            font-family: "Source Code Pro", sans-serif;
+            padding: 10px;
+        }
+        td {
+            vertical-align: top;
+            overflow: hidden;
+        }
+        .emp1 {
+            background-color: #fcd375;
+            text-decoration: none !important;
+            color: black;
+            padding: 3px;
+        }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+        <div class="row">
+            <div class="eight columns"><a href="/">Home</a></div>
+            <div class="four columns" style="text-align:right">2022-05-25 16:56:30.616912</div>
+        </div>
+<h1>Can you get rugged by RocketPool?</h1>
+<p><a href="https://rocketpool.net">RocketPool</a> is a very cool "decentralized ethereum staking protocol" that lets you participate in the new Proof-of-Stake Ethereum consensus model using any amount of ETH you have. Ordinarily, <a href="https://ethereum.org/en/staking">to stake</a> you'd need to have 32 ETH to deposit. RocketPool is a great concept, and a way to earn on your ETH while HODLing.</p>
+<p>But, like all great ideas in crypto, you have to ask yourself... are my funds safe?</p>
+<p>And in the case of RocketPool, the answer is... maybe? You see, there is a bit of a problem with how they deployed their contract, and how the balances of rETH and ETH in the contract are stored.</p>
+<p>RocketPool uses the <a href="https://etherscan.io/address/0x1d8f8f00cfa6758d7be78336684788fb0ee0fa46#code">RocketStorage</a> contract to manage many different values in the protocol. RocketStorage is basically a generic "dictionary" implementation where you pre-compute a key and then can use that to set and get a value, e.g. <code>setUint</code> or <code>getBool</code>.</p>
+<p>The balances for rETH and ETH are each stored in this dictionary using a single key. This means that with one call, a single entity can change the entire supply value for either. So now, the question becomes, who can actually make these calls? Surely the on-chain contracts, and if we knew it was restricted to ONLY the on-chain contracts, I think it would be fine. However, it <strong>is not</strong> clear that access is restricted to just the on-chain contracts.</p>
+<p>Here's the deep dive.</p>
+<p>To get the exchange rate for <code>rETH / ETH</code> you can call <code>getExchangeRate()</code>.</p>
+<pre><code class="language-jsx">export RocketTokenRETH=0xae78736Cd615f374D3085123A210448E74Fc6393
+cast call $RocketTokenRETH 'getExchangeRate()(uint256)'
+
+1025543653492495115       # 1.0255...
+</code></pre>
+<p>This in turn calls <a href="https://etherscan.io/address/0xae78736Cd615f374D3085123A210448E74Fc6393#code#F6#L93">getEthValue(1 ether)</a>.</p>
+<p>In <a href="https://etherscan.io/address/0xae78736Cd615f374D3085123A210448E74Fc6393#code#F6#L65">getEthValue()</a>, for <code>1 ether</code>, the exchange rate is determined by the following formula:</p>
+<pre><code class="language-jsx">1 ether * ETH supply / rETH supply
+</code></pre>
+<p>The <code>ETH</code> and <code>rETH</code> balances are gotten from the <a href="https://etherscan.io/address/0x138313f102ce9a0662f826fca977e3ab4d6e5539#code">RocketNetworkBalances</a> contract, which in turn queries the <a href="https://etherscan.io/address/0x1d8f8f00cfa6758d7be78336684788fb0ee0fa46#code">RocketStorage</a> contract. This is where things begin to get a bit questionable.</p>
+<p>As we said, RocketStorage is a generic "dictionary" like contract, where for any <code>bytes32</code> key you can get or set a particular value type, e.g. <code>setUint</code> or <code>getUint</code>. The caller computes the key before setting a value.</p>
+<p>For instance to <a href="https://etherscan.io/address/0x138313f102ce9a0662f826fca977e3ab4d6e5539#code#F3#L79">getTotalRETHSupply()</a> the RocketNetworkBalances contract is really just calling</p>
+<pre><code class="language-jsx">rocketStorage.getUint(keccak256(&quot;network.balance.reth.supply&quot;));
+</code></pre>
+<p>Reading the values isn’t the problem. That’s public and accessible, as expected. However, you can also do</p>
+<pre><code class="language-jsx">setUint(keccak256(&quot;network.balance.reth.supply&quot;), _value);
+</code></pre>
+<p>But <em>who</em> can <code>setUint()</code>?</p>
+<p>In <code>RocketStorage</code> the <code>setUint</code> function is protected by the <a href="https://etherscan.io/address/0x1d8f8f00cfa6758d7be78336684788fb0ee0fa46#code#F2#L220">onlyLatestRocketNetworkContract</a> modifier. However, this is also just <a href="https://etherscan.io/address/0x1d8f8f00cfa6758d7be78336684788fb0ee0fa46#code#F2#L70">consulting the internal dictionary</a> for boolean values to see if the following key is present and true:</p>
+<pre><code class="language-jsx">require(booleanStorage[keccak256(abi.encodePacked(&quot;contract.exists&quot;, msg.sender))],
+    &quot;Invalid or outdated network contract&quot;);
+</code></pre>
+<p>This implies that at one point someone had to call <code>RocketStorage.setBool()</code> with the string <code>"contract.exists"</code> + <code>some address</code>. That address is then allowed to modify values in the <code>RocketStorage</code> dictionary.</p>
+<p>Values in <code>RocketStorage</code> can be set by the <a href="https://etherscan.io/address/0x0ccf14983364a7735d369879603930afe10df21e">guardian</a> (the contract that deployed the contract) up until <a href="https://etherscan.io/address/0x1d8f8f00cfa6758d7be78336684788fb0ee0fa46#code#F2#L120">setDeployedStatus()</a> is called. Once that has been called, permissions are locked on the dictionary. However, up <em>until</em> this function is called, any number of settings can be jabbed into the dictionary, <strong>including who is allowed to read and write values via the <code>onlyLatestRocketNetworkContract</code> modifier.</strong></p>
+<p>When <code>RocketStorage</code> was deployed there were <a href="https://etherscan.io/txs?a=0x1d8f8f00cfa6758d7be78336684788fb0ee0fa46&amp;p=33">many values set by the guardian</a> (deployer), including multiple <code>setBool</code> values. Because the dictionary key is pre-computed, it is opaque — so you really have no idea what values were set. This includes the values that apply to the <code>onlyLatestRocketNetworkContract</code> modifier.</p>
+<p><strong>Put another way: during this initial deployment period, we have no idea what addresses may have been given write access to <code>RocketStorage</code> that would allow later modifications to things like the rETH supply.</strong> </p>
+<h3>(Hopefully fictional) attack scenario</h3>
+<ol>
+<li>During RocketStorage setup, before calling <code>setDeployedStatus()</code>, <code>guardian</code> made the following call:<ol>
+<li><code>setBool(keccak256(abi.encodePacked("contract.exists", some_secret_address), true)</code></li>
+<li>We have no way of knowing what this <code>setBool</code> call was setting from the txn history, since all we see is the <a href="https://etherscan.io/tx/0xff6d158033960e115f77765d7ef59caca9180f411f3f65a660999b82088c3e7e">computed key</a>, which is a sha3 hash.</li>
+</ol>
+</li>
+<li>In the future, let’s say the exchange rate for <code>rETH / ETH</code> is <code>1.0255</code>. Everything looks reasonable.<ol>
+<li>Remember, the rate is computed from the ETH and rETH balances like:
+<code>90348716875500680014984 / 88098362822311442527161</code> = <code>1.0255</code></li>
+</ol>
+</li>
+<li>Since <code>some_secret_address</code> can call <code>setUint</code> directly on <code>RocketStorage</code>, the attacker can change the rETH balance and modify the exchange rate from, say, <code>1.0255</code> to <code>10.255</code>... e.g. by simply deleting a single decimal:
+<code>90348716875500680014984 / 8809836282231144252716</code> = <code>10.255</code></li>
+</ol>
+<p>This means that an insider could potentially modify the rETH supply, swap out their rETH for ETH, and <code>profit$$</code>.</p>
+<h3>Opaqueness is not your friend</h3>
+<p>So why did RocketPool decide to proceed in this manner? Hard to say, maybe just because it was convenient, perhaps not due to any nefarious motive.</p>
+<p>However, it's impossible to tell without reversing all the <code>setBool</code> calls that preceded <code>setDeployedStatus()</code>. Some rando on the <a href="https://discord.com/channels/405159462932971535/857072928155762718/906669684294823946">RocketPool discord</a> claims to have done this, and even offered to provide a list on request.</p>
+<p>Interestingly, however, RocketPool seemed pretty mum on the whole conversation, and it raises the question: why should users have to try and validate anything here? RocketPool is the one who needs to build trust. So if all those <code>setBool()</code> calls were aboveboard, why don't they publish a list verifying the calls?</p>
+<script
+  async
+  src="https://utteranc.es/client.js"
+  repo="jar-o/jar-o.github.io"
+  issue-term="title"
+  theme="github-light"
+  crossorigin="anonymous"
+></script>
+
+    </div> <!-- container -->
+</body>
+</html>
