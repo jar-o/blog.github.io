@@ -1,6 +1,7 @@
 import os, collections
 from datetime import datetime
 import markdown
+import urllib.parse
 
 cwd = os.getcwd()
 template_dir = os.path.join(cwd, 'templates')
@@ -57,7 +58,7 @@ for fil in files:
 # Generate index page
 index_html = templates.get('header')
 for item in index:
-    row = templates.get('row').replace('[path]', item['path']).replace('[title]', item['title']).replace('[edited]', item['edited'])
+    row = templates.get('row').replace('[path]', urllib.parse.quote(item['path'])).replace('[title]', item['title']).replace('[edited]', item['edited'])
     index_html += row
 index_html += templates.get('footer')
 
