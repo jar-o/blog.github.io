@@ -29,7 +29,7 @@
     <div class="container">
         <div class="row">
             <div class="eight columns"><a href="/">Home</a></div>
-            <div class="four columns" style="text-align:right">2022-05-25 16:56:30.616912</div>
+            <div class="four columns" style="text-align:right">2022-05-30 14:09:03.391238</div>
         </div>
 <h1>Can you get rugged by RocketPool?</h1>
 <p><a href="https://rocketpool.net">RocketPool</a> is a very cool "decentralized ethereum staking protocol" that lets you participate in the new Proof-of-Stake Ethereum consensus model using any amount of ETH you have. Ordinarily, <a href="https://ethereum.org/en/staking">to stake</a> you'd need to have 32 ETH to deposit. RocketPool is a great concept, and a way to earn on your ETH while HODLing.</p>
@@ -67,7 +67,7 @@ cast call $RocketTokenRETH 'getExchangeRate()(uint256)'
 <p><strong>Put another way: during this initial deployment period, we have no idea what addresses may have been given write access to <code>RocketStorage</code> that would allow later modifications to things like the rETH supply.</strong> </p>
 <h3>(Hopefully fictional) attack scenario</h3>
 <ol>
-<li>During RocketStorage setup, before calling <code>setDeployedStatus()</code>, <code>guardian</code> made the following call:<ol>
+<li>During RocketStorage setup, before calling <code>setDeployedStatus()</code>, <code>guardian</code> makes the following call:<ol>
 <li><code>setBool(keccak256(abi.encodePacked("contract.exists", some_secret_address), true)</code></li>
 <li>We have no way of knowing what this <code>setBool</code> call was setting from the txn history, since all we see is the <a href="https://etherscan.io/tx/0xff6d158033960e115f77765d7ef59caca9180f411f3f65a660999b82088c3e7e">computed key</a>, which is a sha3 hash.</li>
 </ol>
