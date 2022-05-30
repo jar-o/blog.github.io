@@ -65,7 +65,7 @@ When `RocketStorage` was deployed there were [many values set by the guardian](h
 
 ### (Hopefully fictional) attack scenario
 
-1. During RocketStorage setup, before calling `setDeployedStatus()`, `guardian` made the following call:
+1. During RocketStorage setup, before calling `setDeployedStatus()`, `guardian` makes the following call:
     1. `setBool(keccak256(abi.encodePacked("contract.exists", some_secret_address), true)`
     2. We have no way of knowing what this `setBool` call was setting from the txn history, since all we see is the [computed key](https://etherscan.io/tx/0xff6d158033960e115f77765d7ef59caca9180f411f3f65a660999b82088c3e7e), which is a sha3 hash.
 2. In the future, let’s say the exchange rate for `rETH / ETH` is `1.0255`. Everything looks reasonable.
